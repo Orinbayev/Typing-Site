@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h3>{{ language.name }} — {{ level.name }} — vaqtni tanlang</h3>
+  <div class="btn-group" role="group">
+    {% for s in durations %}
+      <a class="btn btn-outline-primary"
+         href="{% url 'typing_practice' language.id level.id s %}">
+         {{ s }} s
+      </a>
+    {% endfor %}
+  </div>
+{% endblock %}

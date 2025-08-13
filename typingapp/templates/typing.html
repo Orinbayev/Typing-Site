@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h4>{{ language.name }} — {{ duration }} sekund</h4>
+  <p class="text-muted">Enter bosilganda mashq boshlanadi. Probel bosilganda keyingi so‘zga o‘tasiz.</p>
+
+  <div class="card p-3 mb-3">
+    <div id="target" class="fs-5"></div>
+  </div>
+
+  <textarea id="input" class="form-control" rows="4" placeholder="Matnni shu yerga yozing..."></textarea>
+
+  <div class="d-flex justify-content-between align-items-center mt-3">
+    <div><strong>Vaqt: </strong><span id="timer">{{ duration }}</span>s</div>
+    <div><strong>WPM:</strong> <span id="wpm">0</span> &nbsp;|&nbsp; <strong>Accuracy:</strong> <span id="acc">100</span>%</div>
+  </div>
+
+  <script>
+    const duration = parseInt("{{ duration|escapejs }}");
+    const rawText = `{{ text|escapejs }}`.replace(/\s+/g,' ').trim();
+    const words = rawText.split(' ');
+    const input = document.getElementById('input');
+    const target = document.getElementById('target');
+    const timerEl = document.getElementById('timer');
+    const wpmEl = document.getElementById('wpm');
+    const accEl = document.getElementById('acc');
+
+    // Matnni so‘zlarga bo‘lib ko‘rsatish
+    target.innerHTML = words.map((w, i) => `<span class="word" id="w${i}">${w}</span>`).join(' ');
+    let idx = 0;
+    document.getElementById('w0').classList.add('word-active');
+
+    // Yakuniy hisoblar (faqat so‘z LOCK bo‘lganda yangilanadi)
+    let charsTyped = 0;
+    let charsCorrect = 0;
+    let errorsWords = 0;
+    let wordsCorrect = 0;
+
+    // Timer
+    let started = false, remaining = duration, interval = null, startTime = null;
+
+    function start() {
+      if (started) return;
+      started = true; startTime = Date.now();
+      interval = setInterval(() => {
+        remaining -= 1; timerEl.textContent = remaining; updateStats();
+        if (remaining <= 0) { clearInterval(interval); finish(true); }
+      }, 1000);
+    }
+
+    // Enter bilan start, Space bilan keyingi so‘z
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); if (!started) start(); }
+      if (e.key === ' ') { e.preventDefault(); lockWord(); }
+    });
+
+    // Joriy so‘z uchun “jonli” rang va vaqtinchalik statistika
+    input.addEventListener('input', () => {
+      if (!started && input.value.length) start();
+
+      const cur = input.value;
+      const targetWord = words[idx] || '';
+      const span = document.getElementById('w'+idx);
+      span.classList.remove('word-correct','word-wrong');
+      span.style.background = targetWord.startsWith(cur) || cur.length===0 ? '' : '#f8d7da';
+
+      updateStats(cur); // vaqtinchalik prefixni qo‘shib ko‘rsatamiz
+    });
+
+    function lockWord(){
+      if (idx >= words.length) return;
+
+      const cur = input.value.trim();
+      const targetWord = words[idx];
+      const span = document.getElementById('w'+idx);
+
+      // Belgilar bo‘yicha yakuniy hisob
+      charsTyped += cur.length;
+      const c = Math.min(cur.length, targetWord.length);
+      for (let i=0;i<c;i++) if (cur[i]===targetWord[i]) charsCorrect += 1;
+
+      if (cur === targetWord){ span.classList.add('word-correct'); wordsCorrect += 1; }
+      else { span.classList.add('word-wrong'); errorsWords += 1; }
+      span.classList.remove('word-active');
+      span.style.background = '';
+
+      idx += 1;
+      if (idx < words.length) document.getElementById('w'+idx).classList.add('word-active');
+      input.value = '';
+      updateStats(); // faqat agregatlar asosida
+    }
+
+    function currentPrefixCorrectCount(cur, targetWord){
+      const n = Math.min(cur.length, targetWord.length);
+      let good = 0;
+      for (let i=0;i<n;i++) if (cur[i]===targetWord[i]) good++;
+      return good;
+    }
+
+    function updateStats(liveInput=""){
+      const elapsed = Math.max((Date.now()- (startTime||Date.now()))/1000, 0.001);
+      const minutes = elapsed / 60;
+
+      // Joriy so‘zning to‘g‘ri prefiksi
+      const liveCorrect = liveInput ? currentPrefixCorrectCount(liveInput, words[idx]||'') : 0;
+      const totalCorrectChars = charsCorrect + liveCorrect;
+      const totalTypedChars = charsTyped + (liveInput ? liveInput.length : 0);
+
+      const wpm = Math.round((totalCorrectChars/5) / minutes) || 0;
+      const acc = totalTypedChars ? Math.round((totalCorrectChars/totalTypedChars)*100) : 100;
+
+      wpmEl.textContent = wpm;
+      accEl.textContent = Math.min(100, Math.max(0, acc)); // 0–100 oralig‘ida ushla
+    }
+
+    // CSRF
+    function csrftoken(){
+      const m = document.cookie.match(/csrftoken=([^;]+)/);
+      return m ? m[1] : '';
+    }
+
+    function finish(fromTimer=false){
+      // Timer tugaganda joriy so‘zni bir marta yakunlaymiz
+      if (fromTimer && input.value.trim().length) lockWord();
+
+      input.disabled = true; updateStats();
+
+      // Yakuniy ball = WPM × (Accuracy% / 100)
+      const wpmVal = parseInt(wpmEl.textContent) || 0;
+      const accVal = Math.max(0, Math.min(100, parseInt(accEl.textContent) || 0));
+      const finalScore = Math.round(wpmVal * (accVal / 100));
+
+      fetch("{% url 'result' %}", {
+        method: 'POST',
+        headers: { 'X-CSRFToken': csrftoken() },
+        body: new URLSearchParams({
+          lang_id: "{{ language.id }}",
+          level_id: "{{ level.id }}",
+          duration: "{{ duration }}",
+          wpm: wpmVal,            // <-- qo'shildi
+          accuracy: accVal,       // <-- qo'shildi
+          final_score: finalScore // saqlanadigan qiymat shu
+        })
+      })
+      .then(res => res.text())
+      .then(html => { document.open(); document.write(html); document.close(); })
+      .catch(() => { alert('Natijani yuborishda xatolik yuz berdi.'); });
+      }
+  </script>
+{% endblock %}

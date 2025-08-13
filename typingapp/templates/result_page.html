@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h3>Natija</h3>
+
+  <p><strong>Ism:</strong> {{ player.name }}</p>
+
+  <p class="mb-1"><strong>WPM:</strong> {{ wpm }}</p>
+  <p class="mb-1"><strong>Accuracy:</strong> {{ accuracy }}%</p>
+  <p class="mb-3"><strong>Yakuniy ball:</strong> {{ final_score }}</p>
+
+  <a href="{% url 'select_language' %}" class="btn btn-primary">Bosh sahifa</a>
+{% endblock %}
