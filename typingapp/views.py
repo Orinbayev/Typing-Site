@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import NoReverseMatch
 from django.utils import timezone
 from django.views.decorators.http import require_POST
+from django.http import HttpResponse
 
 from .models import (
     
@@ -544,3 +545,8 @@ def contest_leaderboard(request, contest_id):
         "centers": centers,
         "current_center": center_id or "",
     })
+
+
+
+def healthz(request):
+    return HttpResponse("ok", content_type="text/plain")
