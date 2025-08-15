@@ -1,13 +1,17 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
+{% block title %}Darajani tanlang{% endblock %}
+
 {% block content %}
-  <h3>{{ language.name }} — darajani tanlang</h3>
-  <div class="list-group">
-    {% for lvl in levels %}
-      <a href="{% url 'select_time' language.id lvl.id %}" class="list-group-item list-group-item-action">
-        {{ lvl.name }}
-      </a>
-    {% empty %}
-      <div class="alert alert-warning">Darajalar yo‘q. Admin paneldan qo‘shing.</div>
-    {% endfor %}
-  </div>
+<h3>{{ language.name }} — darajani tanlang</h3>
+
+<div class="list-group mt-3">
+  {% for lv in levels %}
+    <a class="list-group-item list-group-item-action"
+       href="{% url 'typingapp:select_time' language.id lv.id %}">
+      {{ lv.name }}
+    </a>
+  {% empty %}
+    <div class="alert alert-warning">Darajalar topilmadi.</div>
+  {% endfor %}
+</div>
 {% endblock %}

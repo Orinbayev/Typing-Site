@@ -1,0 +1,22 @@
+{# contest/contest_result_page.html #}
+{% extends "base.html" %}
+{% block title %}Natija — {{ contest.title }}{% endblock %}
+
+{% block content %}
+<h3>{{ contest.title }} — Natija</h3>
+
+<p class="mb-1"><strong>WPM:</strong> {{ wpm|floatformat:2 }}</p>
+<p class="mb-1"><strong>Accuracy:</strong> {{ accuracy|floatformat:2 }}%</p>
+<p class="mb-3"><strong>Yakuniy ball:</strong> {{ final_score|floatformat:2 }}</p>
+
+<div class="d-flex gap-2">
+  <a class="btn btn-outline-primary"
+     href="{% url 'typingapp:contest_detail' contest.id %}">
+     Musobaqa sahifasi
+  </a>
+  <a class="btn btn-primary"
+     href="{% url 'typingapp:contest_leaderboard' contest.id %}">
+     Premium reyting
+  </a>
+</div>
+{% endblock %}

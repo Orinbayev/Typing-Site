@@ -1,13 +1,14 @@
 {% extends 'base.html' %}
+{% block title %}Tilni tanlang{% endblock %}
 {% block content %}
-  <h3>Tilni tanlang</h3>
-  <div class="list-group">
-    {% for lang in languages %}
-      <a href="{% url 'select_level' lang.id %}" class="list-group-item list-group-item-action">
-        {{ lang.name }}
-      </a>
-    {% empty %}
-      <div class="alert alert-warning">Hozircha til qo‘shilmagan. Admin panel orqali til qo‘shing.</div>
-    {% endfor %}
-  </div>
+<h3>Tilni tanlang</h3>
+<div class="list-group">
+  {% for lang in languages %}
+    <a href="{% url 'typingapp:select_level' lang.id %}" class="list-group-item list-group-item-action">
+      {{ lang.name }}
+    </a>
+  {% empty %}
+    <div class="alert alert-warning">Hozircha til qo‘shilmagan.</div>
+  {% endfor %}
+</div>
 {% endblock %}

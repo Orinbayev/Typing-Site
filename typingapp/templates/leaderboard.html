@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Reyting{% endblock %}
+
+{% block content %}
+<h3 class="mb-3">Reyting</h3>
+
+<!-- Filter: Global + centers -->
+<div class="mb-3 d-flex flex-wrap gap-2">
+  <a href="{% url 'typingapp:leaderboard' %}"
+     class="btn btn-sm {% if not current_center %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    Global
+  </a>
+  {% for c in centers %}
+    <a href="{% url 'typingapp:leaderboard' %}?center={{ c.id }}"
+       class="btn btn-sm {% if current_center|stringformat:'s' == c.id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+      {{ c.name }}
+    </a>
+  {% endfor %}
+</div>
+
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Foydalanuvchi (nik)</th>
+        <th>Markaz</th>
+        <th>Til</th>
+        <th>Daraja</th>
+        <th>Vaqt</th>
+        <th>WPM</th>
+        <th>Accuracy</th>
+        <th>Ball</th>
+        <th>Sana</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in runs %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+
+        <!-- Nik – annotate(qs) dan yoki fallback -->
+        <td>
+          {% if r.username %}{{ r.username }}
+          {% elif r.player and r.player.user %}{{ r.player.user.username }}
+          {% elif r.player and r.player.name %}{{ r.player.name }}
+          {% else %}Anon{% endif %}
+        </td>
+
+        <td>{{ r.center.name|default:"-" }}</td>
+        <td>{{ r.language.name|default:"-" }}</td>
+        <td>{{ r.level.name|default:"-" }}</td>
+        <td>
+          {% if r.duration and r.duration.seconds %}{{ r.duration.seconds }} s{% else %}-{% endif %}
+        </td>
+        <td>{{ r.wpm|floatformat:2 }}</td>
+        <td>{{ r.accuracy|floatformat:2 }}%</td>
+        <td><strong>{{ r.final_score|floatformat:2 }}</strong></td>
+        <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="10" class="text-muted">Hozircha natijalar yo‘q.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

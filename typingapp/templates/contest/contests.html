@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Musobaqalar{% endblock %}
+{% block content %}
+<h3>Musobaqalar</h3>
+
+{% if contests %}
+  <div class="list-group">
+    {% for ct in contests %}
+      <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+         href="{% url 'typingapp:contest_detail' ct.id %}">
+        <div>
+          <div class="fw-semibold">{{ ct.title|default:"Musobaqa" }}</div>
+          <div class="small text-muted">
+            {{ ct.start_at|date:"Y-m-d H:i" }} — {{ ct.end_at|date:"Y-m-d H:i" }}
+          </div>
+        </div>
+        <span class="badge text-bg-secondary">{{ ct.get_status_display|default:ct.status }}</span>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-warning">Hozircha musobaqa yo‘q.</div>
+{% endif %}
+{% endblock %}

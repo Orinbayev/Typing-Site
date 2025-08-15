@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Chek yuklash — {{ contest.title|default:"Musobaqa" }}{% endblock %}
+
+{% block content %}
+<h3>{{ contest.title|default:"Musobaqa" }} — Chek yuklash</h3>
+
+<p class="text-muted mb-3">
+  To‘lovni Payme/Click orqali qiling (QR yoki to‘g‘ridan-to‘g‘ri link). So‘ng chekning
+  <strong>rasmi yoki PDF</strong>ini yuklang.
+</p>
+
+{# --- Agar view entry ni yuborsa, holatni ko‘rsatamiz (ixtiyoriy) --- #}
+{% if entry %}
+  {% if entry.status == entry.SUBMITTED %}
+    <div class="alert alert-info">
+      Chek yuborilgan. <strong>Tekshirilmoqda.</strong> Iltimos, tasdiqlashni kuting.
+    </div>
+  {% elif entry.status == entry.APPROVED %}
+    <div class="alert alert-success">
+      To‘lov <strong>tasdiqlandi</strong>. Musobaqa start vaqtida “Boshlash” tugmasi ochiladi.
+      <div class="mt-2">
+        <a class="btn btn-outline-primary btn-sm" href="{% url 'typingapp:contest_detail' contest.id %}">Musobaqa sahifasi</a>
+      </div>
+    </div>
+  {% elif entry.status == entry.REJECTED %}
+    <div class="alert alert-danger">
+      Chek <strong>rad etilgan</strong>.
+      {% if entry.admin_note %}<br>Sabab: {{ entry.admin_note }}{% endif %}
+      <br>Pastdagi formadan qayta yuborishingiz mumkin.
+    </div>
+  {% endif %}
+{% endif %}
+
+{% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <form method="post" enctype="multipart/form-data" class="mt-1">
+      {% csrf_token %}
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Telegram @user</label>
+          <input name="telegram"
+                 class="form-control"
+                 placeholder="@username"
+                 value="{{ request.POST.telegram|default:'' }}">
+          <div class="form-text">G‘oliblar bilan bog‘lanish uchun.</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Telefon</label>
+          <input name="phone"
+                 class="form-control"
+                 placeholder="+998 90 123 45 67"
+                 value="{{ request.POST.phone|default:'' }}">
+        </div>
+        <div class="col-12">
+          <label class="form-label">Chek (JPG/PNG/PDF)</label>
+          <input type="file"
+                 name="receipt"
+                 class="form-control"
+                 accept=".jpg,.jpeg,.png,.pdf"
+                 {% if not entry or entry.status != entry.SUBMITTED %}required{% endif %}>
+          <div class="form-text">Yaroqli formatlar: .jpg, .png, .pdf</div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-primary"
+                {% if entry and entry.status == entry.SUBMITTED %}disabled{% endif %}>
+          Yuborish
+        </button>
+        <a class="btn btn-outline-secondary" href="{% url 'typingapp:contest_detail' contest.id %}">Orqaga</a>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="card-title">To‘lov ma’lumotlari</h6>
+        <p class="mb-2 small text-muted">
+          Quyidagi QR orqali yoki linkdan to‘lov qilishingiz mumkin.
+        </p>
+
+        {# Agar statik rasmlar bor bo'lsa ko'rinadi, bo'lmasa yashirinadi #}
+        <div class="d-flex gap-3 align-items-start">
+          <div class="text-center">
+            <img src="{% static 'payme-qr.png' %}" alt="Payme QR"
+                 class="img-fluid border rounded"
+                 style="max-width:160px"
+                 onerror="this.style.display='none'">
+            <div class="small mt-1">Payme</div>
+          </div>
+          <div class="text-center">
+            <img src="{% static 'click-qr.png' %}" alt="Click QR"
+                 class="img-fluid border rounded"
+                 style="max-width:160px"
+                 onerror="this.style.display='none'">
+            <div class="small mt-1">Click</div>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          {# Agar contest modelida to‘lov link maydonlari bo‘lsa, shu yerga qo‘y #}
+          {% if contest.payme_link %}
+            <a class="btn btn-sm btn-outline-primary me-2" href="{{ contest.payme_link }}" target="_blank" rel="noopener">Payme link</a>
+          {% endif %}
+          {% if contest.click_link %}
+            <a class="btn btn-sm btn-outline-success" href="{{ contest.click_link }}" target="_blank" rel="noopener">Click link</a>
+          {% endif %}
+        </div>
+
+        {% if entry and entry.receipt %}
+          <hr>
+          <div class="small">
+            Oxirgi yuklangan chek:
+            <a href="{{ entry.receipt.url }}" target="_blank" rel="noopener">faylni ko‘rish</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

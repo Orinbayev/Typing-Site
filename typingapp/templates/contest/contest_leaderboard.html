@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ contest.title|default:"Musobaqa" }} — Reyting{% endblock %}
+
+{% block content %}
+<h3>{{ contest.title|default:"Musobaqa" }} — Reyting</h3>
+<p class="text-muted mb-2">
+  Boshlanish: {{ contest.start_at|date:"Y-m-d H:i" }} —
+  Tugash: {{ contest.end_at|date:"Y-m-d H:i" }}
+</p>
+
+<!-- Markaz bo'yicha filter -->
+<div class="mb-3 d-flex flex-wrap gap-2">
+  <a href="{% url 'typingapp:contest_leaderboard' contest.id %}"
+     class="btn btn-sm {% if not current_center %}btn-primary{% else %}btn-outline-primary{% endif %}">
+     Hammasi
+  </a>
+  {% for c in centers %}
+    <a href="{% url 'typingapp:contest_leaderboard' contest.id %}?center={{ c.center_id }}"
+       class="btn btn-sm {% if current_center|stringformat:'s' == c.center_id|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+       {{ c.center__name }}
+    </a>
+  {% endfor %}
+</div>
+
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Foydalanuvchi (nik)</th>
+        <th>Markaz</th>
+        <th>WPM</th>
+        <th>Accuracy</th>
+        <th>Ball</th>
+        <th>Sana</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in runs %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+
+        <!-- Nik: annotate -> user -> Anon -->
+        <td>
+          {% if r.username %}{{ r.username }}
+          {% elif r.user %}{{ r.user.username }}
+          {% else %}Anon{% endif %}
+        </td>
+
+        <td>{% if r.center %}{{ r.center.name }}{% else %}-{% endif %}</td>
+        <td>{{ r.wpm|floatformat:2 }}</td>
+        <td>{{ r.accuracy|floatformat:2 }}%</td>
+        <td><strong>{{ r.final_score|floatformat:2 }}</strong></td>
+        <td>{{ r.created_at|date:"Y-m-d H:i" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="text-muted">Hozircha natijalar yo‘q.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<a class="btn btn-outline-secondary" href="/contests/">← Musobaqalar ro‘yxati</a>
+{% endblock %}

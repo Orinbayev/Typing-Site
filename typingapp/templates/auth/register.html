@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Ro‘yxatdan o‘tish{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="mb-3">Ro‘yxatdan o‘tish</h4>
+
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" class="row g-3" id="regForm" novalidate>
+          {% csrf_token %}
+
+          <!-- Ism / Otasining ismi / Familiya -->
+          <div class="col-md-4">
+            <label class="form-label">Ism</label>
+            <input name="first_name" class="form-control" value="{{ data.first_name|default:'' }}" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Otasining ismi (ixtiyoriy)</label>
+            <input name="patronymic" class="form-control" value="{{ data.patronymic|default:'' }}">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Familiya</label>
+            <input name="last_name" class="form-control" value="{{ data.last_name|default:'' }}" required>
+          </div>
+
+          <!-- Nickname -->
+          <div class="col-md-6">
+            <label class="form-label">Username (nik)</label>
+            <input name="username" class="form-control" value="{{ data.username|default:'' }}" placeholder="faqat nik ko‘rinadi" required>
+          </div>
+
+          <!-- Parol 1: ko'rish/yashirish + minimal indikator -->
+          <div class="col-md-6">
+            <label class="form-label">Parol</label>
+            <div class="input-group">
+              <input type="password" name="password1" id="reg-pass1" class="form-control" autocomplete="new-password" required>
+              <button class="btn btn-outline-secondary" type="button" data-toggle-target="reg-pass1">Ko‘rish</button>
+            </div>
+            <!-- faqat progress bar, hech qanday matn yo‘q -->
+            <div class="progress mt-2" style="height:6px;">
+              <div id="pwBar" class="progress-bar" style="width:0%"></div>
+            </div>
+          </div>
+
+          <!-- Parol takror: faqat border rangi bilan mos/emas holat -->
+          <div class="col-md-6">
+            <label class="form-label">Parol (takror)</label>
+            <div class="input-group">
+              <input type="password" name="password2" id="reg-pass2" class="form-control" autocomplete="new-password" required>
+              <button class="btn btn-outline-secondary" type="button" data-toggle-target="reg-pass2">Ko‘rish</button>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <button id="submitBtn" class="btn btn-primary w-100">Ro‘yxatdan o‘tish</button>
+          </div>
+        </form>
+
+        <div class="text-center mt-3">
+          Allaqachon a’zo? <a href="/login/">Kirish</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Parol ko'rish/yashirish
+  document.querySelectorAll('[data-toggle-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-toggle-target');
+      const inp = document.getElementById(id);
+      if (!inp) return;
+      if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'Yopish'; }
+      else { inp.type = 'password'; btn.textContent = 'Ko‘rish'; }
+    });
+  });
+
+  const pass1   = document.getElementById('reg-pass1');
+  const pass2   = document.getElementById('reg-pass2');
+  const pwBar   = document.getElementById('pwBar');
+  const submit  = document.getElementById('submitBtn');
+
+  // Minimal kuch baholash (matnsiz): 0..5 ball -> progress bar rangi
+  function score(pw){
+    if(!pw) return 0;
+    let s = 0;
+    if (pw.length >= 8) s++;
+    if (/[a-z]/.test(pw)) s++;
+    if (/[A-Z]/.test(pw)) s++;
+    if (/\d/.test(pw))   s++;
+    if (/[^A-Za-z0-9]/.test(pw)) s++;
+    return s; // 0..5
+  }
+
+  function render(){
+    const p1 = pass1.value || "";
+    const s  = score(p1);
+    const pct = (s/5)*100;
+
+    pwBar.style.width = pct + "%";
+    pwBar.classList.remove('bg-danger','bg-warning','bg-success');
+    if (s <= 2) pwBar.classList.add('bg-danger');
+    else if (s === 3) pwBar.classList.add('bg-warning');
+    else pwBar.classList.add('bg-success');
+
+    // Parollar mosligini faqat border rangi bilan ko'rsatamiz (matnsiz)
+    if (pass2.value){
+      const ok = p1 && pass2.value === p1;
+      pass2.classList.toggle('is-valid', ok);
+      pass2.classList.toggle('is-invalid', !ok);
+    } else {
+      pass2.classList.remove('is-valid','is-invalid');
+    }
+
+    // Minimal shart: kamida 6 belgi va parollar mos bo'lsin
+    const okLen = p1.length >= 6;
+    const okEq  = p1 && pass2.value && pass2.value === p1;
+    submit.disabled = !(okLen && okEq);
+  }
+
+  pass1.addEventListener('input', render);
+  pass2.addEventListener('input', render);
+  render();
+</script>
+{% endblock %}

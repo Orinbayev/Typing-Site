@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Kirish{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="mb-3">Kirish</h4>
+
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" class="vstack gap-3">
+          {% csrf_token %}
+
+          <div>
+            <label class="form-label">Username</label>
+            <input name="username"
+                   class="form-control"
+                   value="{{ data.username|default:'' }}"
+                   placeholder="nik"
+                   required>
+          </div>
+
+          <div>
+            <label class="form-label">Parol</label>
+            <div class="input-group">
+              <input type="password" name="password" id="login-pass" class="form-control" required>
+              <button class="btn btn-outline-secondary" type="button" onclick="togglePwd('login-pass', this)">Ko‘rish</button>
+            </div>
+          </div>
+
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="remember" id="remember">
+            <label class="form-check-label" for="remember">Meni eslab qol</label>
+          </div>
+
+          <button class="btn btn-primary w-100">Kirish</button>
+        </form>
+
+        <div class="text-center mt-3">
+          Hisob yo‘qmi? <a href="/register/">Ro‘yxatdan o‘tish</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function togglePwd(id, btn){
+    const i = document.getElementById(id);
+    if(!i) return;
+    if(i.type === 'password'){ i.type = 'text'; btn.textContent = 'Yopish'; }
+    else { i.type = 'password'; btn.textContent = 'Ko‘rish'; }
+  }
+</script>
+{% endblock %}
